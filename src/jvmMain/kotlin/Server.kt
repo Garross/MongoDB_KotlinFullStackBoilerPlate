@@ -1,3 +1,4 @@
+import com.mongodb.ConnectionString
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.http.*
@@ -13,9 +14,13 @@ import org.litote.kmongo.coroutine.*
 import org.litote.kmongo.reactivestreams.KMongo
 
 
+val connectionString: ConnectionString? = System.getenv("MONGODB_URI")?.let {
+    ConnectionString("$it?retryWrites=false")
+}
 
-val client = KMongo.createClient().coroutine
-val database = client.getDatabase("shoppingList")
+//Uses chosen env otherwise defaults to local testing db.
+val client = if (connectionString != null) KMongo.createClient(connectionString).coroutine else KMongo.createClient().coroutine
+val database = client.getDatabase(connectionString?.database ?: "shoppingList")
 val collection = database.getCollection<ShoppingListItem>()
 
 fun main() {
